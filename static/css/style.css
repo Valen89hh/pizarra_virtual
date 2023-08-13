@@ -1,0 +1,119 @@
+html, body{
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+
+body{
+    display: flex;
+    flex-direction: column;
+}
+
+.voz-header, .voz-body, .voz-footer {
+    flex: 1;
+}
+  
+.voz-header{
+    background-color: chocolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    padding: 10px;
+}
+
+
+.voz-header h1{
+    font-size: 2rem;
+    font-family: 'Quicksand', sans-serif;
+    text-align: center;
+}
+
+.voz-header p{
+    font-size: 1.2rem;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+}
+.voz-body{
+    background-color: bisque;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 0;
+}
+
+.voz-body img{
+    width: 30%;
+    max-width: 400px;
+    min-width: 200px;
+    margin-bottom: 30px;
+}
+
+.voz-footer{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    background-color: burlywood;
+    color: white;
+    font-weight: bold;
+    
+}
+
+.voz-footer span{
+    margin: auto;
+    font-family: 'Quicksand', sans-serif;
+}
+
+#txtReconocido{
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.success-message, .error-message,#load{
+    display: none;
+    font-family: 'Quicksand', sans-serif;
+}
+
+#load::after{
+    font-size: 1.2rem;
+    content: "Enviando...";
+    animation: loadingAnimation 1s infinite;
+}
+
+.success-message{
+    color: #02a102;
+}
+
+.error-message{
+    color: #e31f1f;
+}
+
+@keyframes scaleAnimation {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+}
+
+@keyframes loadingAnimation {
+    0% {
+      content: "Enviando";
+    }
+    33% {
+      content: "Enviando.";
+    }
+    66% {
+      content: "Enviando..";
+    }
+
+    99% {
+        content: "Enviando...";
+    }
+}
