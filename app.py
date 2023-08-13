@@ -51,7 +51,7 @@ def process_frame(aspect_ratio, sc_x_fin, sc_y_fin):
 
     cmd_voz.open_detector("http://127.0.0.1:8000")
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     manos = Manos()
 
@@ -84,6 +84,8 @@ def process_frame(aspect_ratio, sc_x_fin, sc_y_fin):
 
             # Evaluamos el gesto para reconocer los comandos de voz
             d = manos.get_distance(puntos[0][12], puntos[1][12], True)
+            mouse = puntos[0][8]
+            
 
 
             if previous_distance is not None:
@@ -95,7 +97,7 @@ def process_frame(aspect_ratio, sc_x_fin, sc_y_fin):
                     if d < 10 and puntos[0][0][1] > puntos[0][12][1] and puntos[1][0][1] > puntos[1][12][1]:
                         time += 1
                         print(time)
-                        if time == 30:
+                        if time == 5:
 
                             print("Activando")
                             activate_microfono()
