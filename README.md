@@ -5,7 +5,7 @@ Proyecto para la Fencit 2023 Sogón
 
 **1.** Clona este repositorio:
 
-    git clone https://github.com/Valen89hh/HandPlayController.git
+    git clone https://github.com/Valen89hh/pizarra_virtual.git
 
 **2.** Navega hasta el directorio del proyecto:
 
