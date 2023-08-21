@@ -3,7 +3,9 @@ import pyaudio
 import wave
 import re
 from wit import Wit
-
+import sounddevice as sd
+import threading
+import scipy.io.wavfile as wav
 
 class Voz:
     def __init__(self, acces_token, avatar="Alexa", lenguaje='es', audio_file="audio.wav"):
@@ -26,6 +28,7 @@ class Voz:
         self.MODO_DIBUJO = 'modo_dibujo'
         self.DESACTIVA_MODO_DIBUJO = 'desactiva_modo_dibujo'
 
+        self.sample_rate = 44100  # Frecuencia de muestreo en Hz
 
 
     # Funcion privada para los regex
@@ -39,46 +42,24 @@ class Voz:
         
 
     def __record_audio(self, seconds):
-        CHUNK = 1024
-        FORMAT = pyaudio.paInt16
-        CHANNELS = 1
-        RATE = 16000
+       
 
-
-        stream = self.p.open(format=FORMAT,
-                        channels=CHANNELS,
-                        rate=RATE,
-                        input=True,
-                        frames_per_buffer=CHUNK)
-
-        self.generar_voz("Grabando audio")
-        frames = []
-
-        for _ in range(0, int(RATE / CHUNK * seconds)):
-            data = stream.read(CHUNK)
-            frames.append(data)
-
-        print("Terminó de grabar.")
-        stream.stop_stream()
-        stream.close()
-        self.p.terminate()
-
-        wf = wave.open(self.audio_file, 'wb')
-        wf.setnchannels(CHANNELS)
-        wf.setsampwidth(self.p.get_sample_size(FORMAT))
-        wf.setframerate(RATE)
-        wf.writeframes(b''.join(frames))
-        wf.close()
+        print(f"Recording {self.audio_file} for {seconds} seconds...")
+        audio_data = sd.rec(int(seconds * self.sample_rate), samplerate=self.sample_rate, channels=2)
+        sd.wait()  # Esperar a que la grabación termine
+        print(f"Recording {self.audio_file} complete.")
+    
+        # Guardar la grabación en un archivo WAV
+        wav.write(self.audio_file, self.sample_rate, audio_data)
 
     def __wit_ai_speech_to_text(self):
         headers = {
             'Content-Type': 'audio/wav',
         }
 
-
-        with open(self.audio_file, 'rb') as audio:
-            resp = self.client.speech(audio, headers=headers)
-            return resp["text"]
+        audio = open(self.audio_file, 'rb')
+        resp = self.client.speech(audio, headers=headers)
+        return resp["text"]
         
     def reconocer_voz(self, seconds=5):
         self.__record_audio(seconds)
@@ -93,6 +74,6 @@ class Voz:
 # Función para enviar el audio a Wit.ai y obtener el texto reconocido
 
 
-""" if __name__ == "__main__":
-    voz = Voz(WIT_AI_ACCESS_TOKEN)
-    voz.reconocer_voz() """
+if __name__ == "__main__":
+    voz = Voz('FFKVDNMPF64WRD4IJ4MTDZEXSVL6RBYT')
+    voz.reconocer_voz()

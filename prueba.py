@@ -4,6 +4,7 @@ import cv2
 from PIL import Image, ImageTk
 from Manos import Manos
 from voz_command import Voz
+import threading
 
 class AplicacionDibujo:
     def __init__(self, root):
@@ -26,7 +27,7 @@ class AplicacionDibujo:
         self.boton_limpiar = tk.Button(self.header, text="Limpiar", command=self.limpiar_lienzo)
         self.boton_limpiar.grid(row=0, column=0, padx=10)
 
-        self.btn_audio = tk.Button(self.header, text="Grabar 🎙")
+        self.btn_audio = tk.Button(self.header, text="Grabar 🎙", command=self.grabar_audio)
         self.btn_audio.grid(row=0, column=1, padx=10)
 
         self.btn_audio = tk.Button(self.header, text="Colores 🖌", command=self.select_color)
@@ -44,7 +45,7 @@ class AplicacionDibujo:
 
         # Reconocimiento de voz
         WIT_AI_ACCESS_TOKEN = 'FFKVDNMPF64WRD4IJ4MTDZEXSVL6RBYT'
-        voz = Voz(acces_token=WIT_AI_ACCESS_TOKEN)
+        self.voz = Voz(acces_token=WIT_AI_ACCESS_TOKEN)
 
         #Reconocimiento de manos
         self.manos = Manos()
@@ -67,6 +68,10 @@ class AplicacionDibujo:
         self.ancho, self.alto = (600,600)
         self.pos = None
         self.cursor = self.lienzo.create_oval(0,0,0,0, fill="red")
+
+    def grabar_audio(self):
+        audio_proccess = threading.Thread(target=self.voz.reconocer_voz)
+        audio_proccess.start()
 
     def mostrar_video_en_label(self):
         ret, frame = self.cap.read()
