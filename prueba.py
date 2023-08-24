@@ -30,8 +30,8 @@ class AplicacionDibujo:
         self.btn_audio = tk.Button(self.header, text="Grabar 🎙", command=self.grabar_audio)
         self.btn_audio.grid(row=0, column=1, padx=10)
 
-        self.btn_audio = tk.Button(self.header, text="Colores 🖌", command=self.select_color)
-        self.btn_audio.grid(row=0, column=2, padx=10)
+        self.btn_colores = tk.Button(self.header, text="Colores 🖌", command=self.select_color)
+        self.btn_colores.grid(row=0, column=2, padx=10)
 
 
         # ------------- BODY -----------------
@@ -52,10 +52,6 @@ class AplicacionDibujo:
         self.cap = cv2.VideoCapture(0)
 
 
-        
-
-        
-
         # Configurar eventos del lienzo
         self.lienzo.bind("<Button-1>", self.iniciar_dibujo)
         self.lienzo.bind("<B1-Motion>", self.dibujar)
@@ -69,16 +65,27 @@ class AplicacionDibujo:
         self.pos = None
         self.cursor = self.lienzo.create_oval(0,0,0,0, fill="red")
 
+        # flag 
+        self.grabando_audio = False
+
+    def __process_recor_audio(self):
+        text = self.voz.reconocer_voz()
+        self.grabando_audio = False
+
     def grabar_audio(self):
-        audio_proccess = threading.Thread(target=self.voz.reconocer_voz)
-        audio_proccess.start()
+        if not self.grabando_audio:
+            self.grabando_audio = True
+            audio_proccess = threading.Thread(target=self.__process_recor_audio)
+            audio_proccess.start()
+
+    
 
     def mostrar_video_en_label(self):
         ret, frame = self.cap.read()
         
         if ret:
             frame = cv2.resize(frame, (self.ancho, self.alto), interpolation=cv2.INTER_AREA)
-            frame = cv2.flip(frame, 1)
+            # frame = cv2.flip(frame, 1)
             # Procesa el fotograma capturado, por ejemplo, detecta manos
             frame_procesado, puntos = self.manos.reconocer_mano(frame, dibujar=True)
             
@@ -87,9 +94,10 @@ class AplicacionDibujo:
                 # print(d)
                 x, y = puntos[0][8]
 
+
                 self.lienzo.coords(self.cursor, x-5,y-5,x+5,y+5)
                 if puntos[0][12][1] < puntos[0][9][1]:
-                    print("dibujar")
+                    # print("dibujar")
 
                     
                     # Verificar si self.ultimo_x y self.ultimo_y son None
@@ -101,6 +109,21 @@ class AplicacionDibujo:
                     self.ultimo_x = None
                     self.ultimo_y = None
                 # self.lienzo.create_oval(x-5, y-5, x+5, y+5, fill="red")
+
+            elif len(puntos) == 2:
+                hand_1_p8 = puntos[0][8]
+                hand_2_p8 = puntos[1][8]
+                hand_3_p8 = puntos[0][4]
+                hand_4_p8 = puntos[1][4]
+                print(hand_1_p8, hand_2_p8)
+                d1 = self.manos.get_distance(hand_1_p8, hand_2_p8, dibujar=True) 
+                d2 = self.manos.get_distance(hand_3_p8, hand_4_p8, dibujar=True) 
+
+                if d1 <= 10 and d2 <= 10:
+                    x = abs(hand_1_p8[0]-hand_2_p8[0])//2 + min(hand_2_p8[0], hand_1_p8[0])
+                    y = abs(hand_1_p8[1]-hand_2_p8[1])//2 + min(hand_2_p8[1], hand_1_p8[1])
+                    punto_1 = (x, y)
+                    cv2.circle(frame_procesado, punto_1, 10, (2550,0,0), thickness=2)
 
             # Convierte la imagen de OpenCV a formato RGB
             imagen_rgb = cv2.cvtColor(frame_procesado, cv2.COLOR_BGR2RGB)
@@ -134,6 +157,8 @@ class AplicacionDibujo:
 
     def limpiar_lienzo(self):
         self.lienzo.delete("all")
+        self.cursor = self.lienzo.create_oval(0,0,0,0, fill="red")
+
 
     def select_color(self):
         color = colorchooser.askcolor(title="Selecciona un color")
