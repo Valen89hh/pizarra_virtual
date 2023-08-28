@@ -20,12 +20,16 @@ class Voz:
         # Objeto de Regex para validar los comandos
         self.comandos_patrones = {
             'modo_dibujo': lambda txt: self.__valid_comand('activa el modo dibujo', txt),
+            'modo_grafico': lambda txt: self.__valid_comand('activa el modo gráfico', txt),
+            'modo_imagen': lambda txt: self.__valid_comand('activa el modo imagen', txt),
             'desactiva_modo_dibujo': lambda txt: self.__valid_comand('desactiva el modo dibujo', txt),
 
         }
 
         # Objeto de comandos
         self.MODO_DIBUJO = 'modo_dibujo'
+        self.MODO_GRAFICO = 'modo_grafico'
+        self.MODO_IMAGEN = 'modo_imagen'
         self.DESACTIVA_MODO_DIBUJO = 'desactiva_modo_dibujo'
 
         self.sample_rate = 44100  # Frecuencia de muestreo en Hz
@@ -66,6 +70,7 @@ class Voz:
         response = self.__wit_ai_speech_to_text()
         print("Texto: ", response)
         self.generar_voz(response)
+        return response
 
 # Configura tu token de acceso de Wit.ai
 
