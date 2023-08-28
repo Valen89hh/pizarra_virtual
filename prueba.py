@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 from Manos import Manos
 from voz_command import Voz
 import threading
+import numpy as np
 
 class AplicacionDibujo:
     def __init__(self, root):
@@ -67,9 +68,26 @@ class AplicacionDibujo:
 
         # flag 
         self.grabando_audio = False
+        self.modo_dibujo = False
+        self.modo_grafico = False
+        self.modo_imagen = False
+
+        self.screen_x_ini = 0
+        self.screen_y_ini = 0
+        self.screen_x_fin = 800
+        self.screen_y_fin = 600
+        self.aspect_ratio = (self.screen_x_fin - self.screen_x_ini) / (self.screen_y_fin - self.screen_y_ini)
+        self.x_y_ini = 100 
+        print(self.aspect_ratio)
 
     def __process_recor_audio(self):
         text = self.voz.reconocer_voz()
+
+        self.modo_dibujo = self.voz.comandos_patrones[self.voz.MODO_DIBUJO](text)
+        self.modo_grafico = self.voz.comandos_patrones[self.voz.MODO_GRAFICO](text)
+        self.modo_imagen = self.voz.comandos_patrones[self.voz.MODO_IMAGEN](text)
+            
+
         self.grabando_audio = False
 
     def grabar_audio(self):
@@ -87,24 +105,38 @@ class AplicacionDibujo:
             frame = cv2.resize(frame, (self.ancho, self.alto), interpolation=cv2.INTER_AREA)
             # frame = cv2.flip(frame, 1)
             # Procesa el fotograma capturado, por ejemplo, detecta manos
+            
+            area_width = self.ancho - self.x_y_ini * 2
+            area_height = int(area_width/ self.aspect_ratio)
+            aux_img = np.zeros(frame.shape, np.uint8)
+            aux_img = cv2.rectangle(aux_img, (self.x_y_ini, self.x_y_ini), (self.x_y_ini + area_width, self.x_y_ini + area_height), (255, 0, 0), -1)
+
             frame_procesado, puntos = self.manos.reconocer_mano(frame, dibujar=True)
+            frame_procesado = cv2.addWeighted(frame_procesado, 1, aux_img, 0.7, 0)
             
             if len(puntos) == 1:
                 # d = self.manos.get_distance(puntos[0][6], puntos[0][4])
                 # print(d)
                 x, y = puntos[0][8]
 
+                xm = int(np.interp(x, (self.x_y_ini, self.x_y_ini+area_width), (self.screen_x_ini, self.screen_x_fin)))
+                ym = int(np.interp(y, (self.x_y_ini, self.x_y_ini+area_height), (self.screen_y_ini, self.screen_y_fin)))
 
-                self.lienzo.coords(self.cursor, x-5,y-5,x+5,y+5)
+
+
+                self.lienzo.coords(self.cursor, xm-5,ym-5,xm+5,ym+5)
                 if puntos[0][12][1] < puntos[0][9][1]:
                     # print("dibujar")
 
                     
                     # Verificar si self.ultimo_x y self.ultimo_y son None
                     if self.ultimo_x is not None and self.ultimo_y is not None:
-                        self.lienzo.create_line(self.ultimo_x, self.ultimo_y, x, y, fill="black", width=2)
-                    self.ultimo_x = x
-                    self.ultimo_y = y
+                        if self.modo_dibujo:
+                            self.lienzo.create_line(self.ultimo_x, self.ultimo_y, xm, ym, fill="black", width=2)
+                    
+                    
+                    self.ultimo_x = xm
+                    self.ultimo_y = ym
                 else:
                     self.ultimo_x = None
                     self.ultimo_y = None
@@ -118,13 +150,15 @@ class AplicacionDibujo:
                 print(hand_1_p8, hand_2_p8)
                 d1 = self.manos.get_distance(hand_1_p8, hand_2_p8, dibujar=True) 
                 d2 = self.manos.get_distance(hand_3_p8, hand_4_p8, dibujar=True) 
-
-                if d1 <= 10 and d2 <= 10:
-                    x = abs(hand_1_p8[0]-hand_2_p8[0])//2 + min(hand_2_p8[0], hand_1_p8[0])
-                    y = abs(hand_1_p8[1]-hand_2_p8[1])//2 + min(hand_2_p8[1], hand_1_p8[1])
-                    punto_1 = (x, y)
-                    cv2.circle(frame_procesado, punto_1, 10, (2550,0,0), thickness=2)
-
+               
+                x = abs(hand_1_p8[0]-hand_2_p8[0])//2 + min(hand_2_p8[0], hand_1_p8[0])
+                y = abs(hand_1_p8[1]-hand_2_p8[1])//2 + min(hand_2_p8[1], hand_1_p8[1])
+                punto_1 = (x, y)
+                cv2.circle(frame_procesado, punto_1, 10, (255,0,0), thickness=2)
+                d3 = self.manos.get_distance(punto_1, hand_4_p8, True)
+                if d1 <= 10 and d2 <= 10 and d3 < 10:
+                    
+                    self.grabar_audio()
             # Convierte la imagen de OpenCV a formato RGB
             imagen_rgb = cv2.cvtColor(frame_procesado, cv2.COLOR_BGR2RGB)
             
